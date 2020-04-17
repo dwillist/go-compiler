@@ -22,10 +22,13 @@ jobs:
 
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
-    - run: echo "::set_env name=NEXT_TAG::$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
+    - name: Create new release version
+      run: |
+        export NEW_VERSION="$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
+        echo "::set-env name=NEW_VERSION::$NEW_VERSION"
 
     - name: package
-      run: PACKAGE_DIR=artifact ./scripts/package.sh -a
+      run: PACKAGE_DIR=artifact ./scripts/package.sh -a -v ${{ env.NEW_VERSION }}
 
 
     - name: Create Release
@@ -34,9 +37,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       with:
-        tag_name: ${{ env.NEXT_TAG }} 
+        tag_name: ${{ env.NEW_VERSION }}
         #release_name: Release ${{ github.ref }}
-        release_name: Release ${{ env.NEXT_TAG }}
+        release_name: Release ${{ env.NEW_VERSION }}
         body: |
           Changes in this Release
           - First Change
