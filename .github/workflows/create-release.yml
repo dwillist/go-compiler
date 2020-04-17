@@ -22,10 +22,7 @@ jobs:
 
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v2
-
-    - run: echo "::set-env name=NEXT_TAG::$(./github/utils/bump_patch.sh (git describe --tags `git rev-list --tags --max-count=1`)"
+    - run: echo "::set_env name=NEXT_TAG::$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
 
     - name: package
       run: PACKAGE_DIR=artifact ./scripts/package.sh -a
