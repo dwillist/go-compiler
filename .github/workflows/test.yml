@@ -65,6 +65,16 @@ jobs:
 
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
+    - name: Create new release version
+      run: |
+        export NEW_VERSION="$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
+        echo "::set-env name=NEW_VERSION::$NEW_VERSION"
+
+    - name: Create new release version
+      run: |
+        export ARTIFACT_NAME="artifact-$(git rev-parse HEAD)"
+        echo "::set-env name=ARTIFACT_NAME::$ARTIFACT_NAME"
+
     - name: Integration Test
       run: ./scripts/integration.sh
       env:
