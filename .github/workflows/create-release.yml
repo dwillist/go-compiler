@@ -1,5 +1,9 @@
 name: Create Release
 
+on:
+  push:
+    branches:
+    - master
 
 jobs:
   create-release-artifact:
@@ -23,8 +27,8 @@ jobs:
         export NEW_VERSION="$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
         echo "::set-env name=NEW_VERSION::$NEW_VERSION"
 
-    - name: package
-      run: PACKAGE_DIR=artifact ./scripts/package.sh -a -v ${{ env.NEW_VERSION }}
+    # - name: package
+    #   run: PACKAGE_DIR=artifact ./scripts/package.sh -a -v ${{ env.NEW_VERSION }}
 
 
     - name: Create Release
@@ -43,6 +47,19 @@ jobs:
         draft: false
         prerelease: false
 
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        project_id: paketo-buildpacks
+        service_account_key: ${{ secrets.gcloud_access_key }}
+        export_default_credentials: true
+    - run: |
+        ARTIFACT_NAME="artifact-$(git rev-parse HEAD)"
+        DOWNLOADED="${ARTIFACT_NAME}.tgz"
+        echo downloading $DOWNLOADED
+        gsutil cp "gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/${DOWNLOADED}" "$DOWNLOADED"
+        gsutil hash -m "$DOWNLOADED"
+        echo "::set-env name=DOWNLOADED::$DOWNLOADED"
+
     - name: Upload Release Asset
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
@@ -50,8 +67,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: ./artifact.tgz
-        asset_name: artifact-0.0.122.tgz
+        asset_path: ./${DOWNLOADED}
+        asset_name: artifact-${NEW_VERSION}.tgz
         asset_content_type: application/gzip
 
 
