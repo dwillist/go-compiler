@@ -83,10 +83,19 @@ jobs:
       env:
         GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - uses: actions-hub/gcloud@master
-      env:
-        PROJECT_ID: paketo-buildpacks
-        APPLICATION_CREDENTIALS: ${{ secrets.gcloud_access_key }}
-        CLI: gsutil
+    # - uses: actions-hub/gcloud@master
+    #   env:
+    #     PROJECT_ID: paketo-buildpacks
+    #     APPLICATION_CREDENTIALS: ${{ secrets.gcloud_access_key }}
+    #     CLI: gsutil
+    #   with:
+    #     args: cp "${ARTIFACT_NAME}.tgz" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
+
+    - name: Upload artifacts to gcp bucket
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
-        args: cp "${ARTIFACT_NAME}.tgz" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
+        project_id: paketo-buildpacks
+        service_account_key: ${{ secrets.gcloud_access_key }}
+    - run: gsutil cp "${ARTIFACT_NAME}.tgz" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
+
+
