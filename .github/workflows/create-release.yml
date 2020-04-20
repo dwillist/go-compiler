@@ -1,9 +1,5 @@
 name: Create Release
 
-on:
-  push: # any commit to the master branch
-    branches:
-      - master
 
 jobs:
   create-release-artifact:
