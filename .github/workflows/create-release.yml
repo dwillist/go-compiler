@@ -55,8 +55,13 @@ jobs:
     - run: |
         ARTIFACT_NAME="artifact-$(git rev-parse HEAD)"
         DOWNLOADED="${ARTIFACT_NAME}.tgz"
+        GS_URL="gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/${DOWNLOADED}"
+        if ! gsutil -q stat ${GS_URL}; then
+          echo "The artifact doesn't exist. Not creating release"
+          exit 1
+        fi
         echo downloading $DOWNLOADED
-        gsutil cp "gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/${DOWNLOADED}" "$DOWNLOADED"
+        gsutil cp ${GS_URL} "$DOWNLOADED"
         gsutil hash -m "$DOWNLOADED"
         echo "::set-env name=DOWNLOADED::$DOWNLOADED"
 
