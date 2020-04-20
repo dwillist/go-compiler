@@ -91,21 +91,19 @@ jobs:
     #   with:
     #     args: cp "${ARTIFACT_NAME}.tgz" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
 
-  artifact-upload:
-    name: Upload artifacts to gcp bucket
-    runs-on: ubuntu-latest
-    needs: integration
-    steps:
-    - uses: actions/checkout@v2
     - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
         project_id: paketo-buildpacks
         service_account_key: ${{ secrets.gcloud_access_key }}
         export_default_credentials: true
     - run: |
-        file="${{ env.ARTIFACT_NAME }}.tgz"
+        file="${ARTIFACT_NAME}.tgz"
         echo uploading $file
         gsutil hash -m "$file"
         gsutil cp "$file" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
-
-
+    - run: |
+        file="${ARTIFACT_NAME}.tgz"
+        downloaded="downloaded.tgz"
+        echo downloading $file
+        gsutil cp "gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/${file}" "$downloaded"
+        gsutil hash -m "$downloaded"
