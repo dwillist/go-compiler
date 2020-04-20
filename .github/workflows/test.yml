@@ -43,7 +43,7 @@ jobs:
 
     - name: Create new release version
       run: |
-        export NEW_VERSION="artifact-$(git rev-parse HEAD)"
+        export ARTIFACT_NAME="artifact-$(git rev-parse HEAD)"
         echo "::set-env name=ARTIFACT_NAME::$ARTIFACT_NAME"
 
     - name: package
@@ -66,7 +66,7 @@ jobs:
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
     - name: Integration Test
-      run: ./scripts/integration.sh 
+      run: ./scripts/integration.sh
       env:
         GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -76,4 +76,4 @@ jobs:
         APPLICATION_CREDENTIALS: ${{ secrets.gcloud_access_key }}
         CLI: gsutil
       with:
-        args: cp "$ARTIFACT_NAME" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler
+        args: cp "$ARTIFACT_NAME" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
