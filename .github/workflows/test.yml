@@ -102,6 +102,10 @@ jobs:
         project_id: paketo-buildpacks
         service_account_key: ${{ secrets.gcloud_access_key }}
         export_default_credentials: true
-    - run: gsutil cp "${ARTIFACT_NAME}.tgz" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
+    - run: |
+        file="${{ env.ARTIFACT_NAME }}.tgz"
+        echo uploading $file
+        gsutil hash -m "$file"
+        gsutil cp "$file" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
 
 
