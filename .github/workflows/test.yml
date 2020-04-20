@@ -75,6 +75,9 @@ jobs:
         export ARTIFACT_NAME="artifact-$(git rev-parse HEAD)"
         echo "::set-env name=ARTIFACT_NAME::$ARTIFACT_NAME"
 
+    - name: package
+      run: PACKAGE_DIR="$ARTIFACT_NAME" ./scripts/package.sh -a -v ${{ env.NEW_VERSION }}
+
     - name: Integration Test
       run: ./scripts/integration.sh
       env:
@@ -86,4 +89,4 @@ jobs:
         APPLICATION_CREDENTIALS: ${{ secrets.gcloud_access_key }}
         CLI: gsutil
       with:
-        args: cp "$ARTIFACT_NAME" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
+        args: cp "${ARTIFACT_NAME}.tgz" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
