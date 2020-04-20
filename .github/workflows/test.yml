@@ -76,4 +76,4 @@ jobs:
         APPLICATION_CREDENTIALS: ${{ secrets.gcloud_access_key }}
         CLI: gsutil
       with:
-        args: cp "$ARTIFACT_NAME" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler
+        args: cp "$ARTIFACT_NAME" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler -p paketo-buildpacks
