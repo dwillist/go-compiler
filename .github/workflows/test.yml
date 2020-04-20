@@ -72,8 +72,7 @@ jobs:
 
     - uses: actions-hub/gcloud@master
       env:
-        PROJECT_ID:
         APPLICATION_CREDENTIALS: ${{ secrets.gcloud_access_key }}
         CLI: gsutil
       with:
-        args: cp "$ARTIFACT_NAME" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler -p paketo-buildpacks
+        args: cp "$ARTIFACT_NAME" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler
