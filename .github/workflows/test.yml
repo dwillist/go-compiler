@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
+  tests:
     name: Unit and Integration Test
     runs-on: ubuntu-latest
     steps:
