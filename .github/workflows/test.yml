@@ -1,12 +1,12 @@
 name: Run Tests
 
 on:
-  pull_request:
+  push:
     branches: [ master ]
 
 jobs:
-  unit:
-    name: Unit Tests
+  test:
+    name: Unit and Integration Test
     runs-on: ubuntu-latest
     steps:
 
@@ -22,35 +22,20 @@ jobs:
     - name: Unit Test
       run: ./scripts/unit.sh
 
+    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+
+    # Run integration tests using the packaged artifact
+    - name: Integration Test
+      run: ./scripts/integration.sh
+      env:
+        GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   package-artifact:
     name: Package Artifact
     runs-on: ubuntu-latest
-    needs: unit
+    needs: tests
     steps:
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-
-    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-
-    - name: Create new release version
-      run: |
-        export NEW_VERSION="$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
-        echo "::set-env name=NEW_VERSION::$NEW_VERSION"
-
-    - name: Create new release version
-      run: |
-        export ARTIFACT_NAME="artifact-$(git rev-parse HEAD)"
-        echo "::set-env name=ARTIFACT_NAME::$ARTIFACT_NAME"
-
-    - name: package
-      run: PACKAGE_DIR="$ARTIFACT_NAME" ./scripts/package.sh -a -v ${{ env.NEW_VERSION }}
-
-  integration:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: package-artifact
-    steps:
     - name: Set up Go 1.14
       uses: actions/setup-go@v1
       with:
@@ -62,31 +47,27 @@ jobs:
 
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
-    - name: Create new release version
+    - name: Get Repo Name
       run: |
-        export NEW_VERSION="$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
-        echo "::set-env name=NEW_VERSION::$NEW_VERSION"
+        REPO_NAME="$(basename `git rev-parse --show-toplevel`)"
+        echo "::set-env name=REPO_NAME::$REPO_NAME"
 
     - name: Create new release version
       run: |
-        export ARTIFACT_NAME="artifact-$(git rev-parse HEAD)"
+        NEW_VERSION="$(./.github/utils/bump_patch.sh $(git describe --tags `git rev-list --tags --max-count=1`))"
+        echo "::set-env name=NEW_VERSION::$NEW_VERSION"
+
+    - name: Create Artifact Name
+      run: |
+        ARTIFACT_NAME="${REPO_NAME}-$(git rev-parse HEAD)"
         echo "::set-env name=ARTIFACT_NAME::$ARTIFACT_NAME"
+
+    - name: Create Version File
+      run: |
+        echo "{\"version\": \"${NEW_VERSION}\"}" > ${ARTIFACT_NAME}.json
 
     - name: package
       run: PACKAGE_DIR="$ARTIFACT_NAME" ./scripts/package.sh -a -v ${{ env.NEW_VERSION }}
-
-    - name: Integration Test
-      run: ./scripts/integration.sh
-      env:
-        GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    # - uses: actions-hub/gcloud@master
-    #   env:
-    #     PROJECT_ID: paketo-buildpacks
-    #     APPLICATION_CREDENTIALS: ${{ secrets.gcloud_access_key }}
-    #     CLI: gsutil
-    #   with:
-    #     args: cp "${ARTIFACT_NAME}.tgz" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
 
     - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
@@ -96,11 +77,91 @@ jobs:
     - run: |
         file="${ARTIFACT_NAME}.tgz"
         echo uploading $file
-        gsutil hash -m "$file"
-        gsutil cp "$file" gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/
+        gsutil cp "$file" "gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/$REPO_NAME/"
     - run: |
-        file="${ARTIFACT_NAME}.tgz"
-        downloaded="downloaded.tgz"
-        echo downloading $file
-        gsutil cp "gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/go-compiler/${file}" "$downloaded"
-        gsutil hash -m "$downloaded"
+        file="${ARTIFACT_NAME}.json"
+        echo uploading $file
+        gsutil cp "$file" "gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/$REPO_NAME/"
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: package-artifact
+    steps:
+
+    - name: Set up Go 1.14
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+
+    - name: Get Repo Name
+      run: |
+        REPO_NAME="$(basename `git rev-parse --show-toplevel`)"
+        echo "::set-env name=REPO_NAME::$REPO_NAME"
+
+    - name: Create Artifact Name
+      run: |
+        ARTIFACT_NAME="${REPO_NAME}-$(git rev-parse HEAD)"
+        echo "::set-env name=ARTIFACT_NAME::$ARTIFACT_NAME"
+
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        project_id: paketo-buildpacks
+        service_account_key: ${{ secrets.gcloud_access_key }}
+        export_default_credentials: true
+    - run: |
+        GS_BUCKET_URL="gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/$REPO_NAME"
+        if ! gsutil -q stat "${GS_URL}/${ARTIFACT_NAME}.tgz"; then
+          echo "The artifact tgz doesn't exist. Not creating release"
+          exit 1
+        fi
+        if ! gsutil -q stat "${GS_URL}/${ARTIFACT_NAME}.json"; then
+          echo "The artifact json doesn't exist. Not creating release"
+          exit 1
+        fi
+        echo downloading "${ARTIFACT_NAME}.tgz"
+        gsutil cp "${GS_URL}/${ARTIFACT_NAME}.tgz" .
+        echo downloading "${ARTIFACT_NAME}.json"
+        gsutil cp "${GS_URL}/${ARTIFACT_NAME}.json" .
+
+    - name: Read Artifact JSON
+      run: |
+        NEW_VERSION=$(cat "${ARTIFACT_NAME}.json" | jq -rj .version)
+        echo "::set-env name=NEW_VERSION::$NEW_VERSION"
+
+    - name: Create Github Release Body
+      run: |
+        go get -u github.com/cloudfoundry/packit/cargo/jam
+        RELEASE_BODY=$(jam summarize --buildpack "${ARTIFACT_NAME}.tgz" --format markdown)
+        echo "::set-env name=RELEASE_BODY::$RELEASE_BODY"
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ env.NEW_VERSION }}
+        release_name: ${{ env.NEW_VERSION }}
+        body: |
+          ${{ env.RELEASE_BODY }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: "./${ARTIFACT_NAME}.tgz"
+        asset_name: "${REPO_NAME}-${NEW_VERSION}.tgz"
+        asset_content_type: application/gzip
+
