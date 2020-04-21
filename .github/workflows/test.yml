@@ -60,6 +60,7 @@ jobs:
 
     - name: Create Artifact Name
       run: |
+        # todo don't repeat REPO_NAME
         ARTIFACT_NAME="${REPO_NAME}-$(git rev-parse HEAD)"
         echo "::set-env name=ARTIFACT_NAME::$ARTIFACT_NAME"
 
@@ -103,6 +104,7 @@ jobs:
 
     - name: Get Repo Name
       run: |
+        # todo don't repeat REPO_NAME
         REPO_NAME="$(basename `git rev-parse --show-toplevel`)"
         echo "::set-env name=REPO_NAME::$REPO_NAME"
 
@@ -116,7 +118,9 @@ jobs:
         project_id: paketo-buildpacks
         service_account_key: ${{ secrets.gcloud_access_key }}
         export_default_credentials: true
-    - run: |
+
+    - name: Download Artificat from bucket
+      run: |
         GS_BUCKET_URL="gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/$REPO_NAME"
         if ! gsutil -q stat "${GS_BUCKET_URL}/${ARTIFACT_NAME}.tgz"; then
           echo "The artifact tgz doesn't exist. Not creating release"
@@ -162,7 +166,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        asset_path: "./${ARTIFACT_NAME}.tgz"
+        asset_path: "${ARTIFACT_NAME}.tgz"
         asset_name: "${REPO_NAME}-${NEW_VERSION}.tgz"
         asset_content_type: application/gzip
 
