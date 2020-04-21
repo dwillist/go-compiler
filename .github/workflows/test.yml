@@ -76,6 +76,8 @@ jobs:
       run: |
         go install github.com/cloudfoundry/packit/cargo/jam
         RELEASE_BODY=$($HOME/go/bin/jam summarize --buildpack "${ARTIFACT_NAME}.tgz" --format markdown)
+        # Coz of this messed up issue
+        # https://github.community/t5/GitHub-Actions/set-output-Truncates-Multiline-Strings/m-p/38372#M3322
         RELEASE_BODY="${RELEASE_BODY//'%'/'%25'}"
         RELEASE_BODY="${RELEASE_BODY//$'\n'/'%0A'}"
         RELEASE_BODY="${RELEASE_BODY//$'\r'/'%0D'}"
