@@ -137,7 +137,7 @@ jobs:
 
     - name: Create Github Release Body
       run: |
-        go get -u github.com/cloudfoundry/packit/cargo/jam
+        go get github.com/cloudfoundry/packit/cargo/jam
         RELEASE_BODY=$($GOPATH/bin/jam summarize --buildpack "${ARTIFACT_NAME}.tgz" --format markdown)
         echo "::set-env name=RELEASE_BODY::$RELEASE_BODY"
 
