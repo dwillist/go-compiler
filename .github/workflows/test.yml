@@ -135,13 +135,10 @@ jobs:
         NEW_VERSION=$(cat "${ARTIFACT_NAME}.json" | jq -rj .version)
         echo "::set-env name=NEW_VERSION::$NEW_VERSION"
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v2
-
     - name: Create Github Release Body
       run: |
-        go get github.com/cloudfoundry/packit/cargo/jam
-        RELEASE_BODY=$($GOPATH/bin/jam summarize --buildpack "${ARTIFACT_NAME}.tgz" --format markdown)
+        go install github.com/cloudfoundry/packit/cargo/jam
+        RELEASE_BODY=$($HOME/go/bin/jam summarize --buildpack "${ARTIFACT_NAME}.tgz" --format markdown)
         echo "::set-env name=RELEASE_BODY::$RELEASE_BODY"
 
     - name: Create Release
