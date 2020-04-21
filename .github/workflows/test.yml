@@ -76,6 +76,9 @@ jobs:
       run: |
         go install github.com/cloudfoundry/packit/cargo/jam
         RELEASE_BODY=$($HOME/go/bin/jam summarize --buildpack "${ARTIFACT_NAME}.tgz" --format markdown)
+        RELEASE_BODY="${RELEASE_BODY//'%'/'%25'}"
+        RELEASE_BODY="${RELEASE_BODY//$'\n'/'%0A'}"
+        RELEASE_BODY="${RELEASE_BODY//$'\r'/'%0D'}"
         echo "::set-output name=release_body::$RELEASE_BODY"
 
     - name: Create Release
