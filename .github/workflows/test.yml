@@ -117,18 +117,18 @@ jobs:
         export_default_credentials: true
     - run: |
         GS_BUCKET_URL="gs://artifacts.paketo-buildpacks.appspot.com/pr-artifacts/$REPO_NAME"
-        if ! gsutil -q stat "${GS_URL}/${ARTIFACT_NAME}.tgz"; then
+        if ! gsutil -q stat "${GS_BUCKET_URL}/${ARTIFACT_NAME}.tgz"; then
           echo "The artifact tgz doesn't exist. Not creating release"
           exit 1
         fi
-        if ! gsutil -q stat "${GS_URL}/${ARTIFACT_NAME}.json"; then
+        if ! gsutil -q stat "${GS_BUCKET_URL}/${ARTIFACT_NAME}.json"; then
           echo "The artifact json doesn't exist. Not creating release"
           exit 1
         fi
         echo downloading "${ARTIFACT_NAME}.tgz"
-        gsutil cp "${GS_URL}/${ARTIFACT_NAME}.tgz" .
+        gsutil cp "${GS_BUCKET_URL}/${ARTIFACT_NAME}.tgz" .
         echo downloading "${ARTIFACT_NAME}.json"
-        gsutil cp "${GS_URL}/${ARTIFACT_NAME}.json" .
+        gsutil cp "${GS_BUCKET_URL}/${ARTIFACT_NAME}.json" .
 
     - name: Read Artifact JSON
       run: |
