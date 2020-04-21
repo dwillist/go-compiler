@@ -135,6 +135,9 @@ jobs:
         NEW_VERSION=$(cat "${ARTIFACT_NAME}.json" | jq -rj .version)
         echo "::set-env name=NEW_VERSION::$NEW_VERSION"
 
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v2
+
     - name: Create Github Release Body
       run: |
         go get github.com/cloudfoundry/packit/cargo/jam
