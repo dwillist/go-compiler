@@ -134,6 +134,8 @@ jobs:
         gsutil cp "${GS_BUCKET_URL}/${ARTIFACT_NAME}.tgz" .
         echo downloading "${ARTIFACT_NAME}.json"
         gsutil cp "${GS_BUCKET_URL}/${ARTIFACT_NAME}.json" .
+        DOWNLOADED="${ARTIFACT_NAME}.tgz"
+        echo "::set-env name=DOWNLOADED::$DOWNLOADED"
 
     - name: Read Artifact JSON
       run: |
@@ -166,7 +168,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        asset_path: "${ARTIFACT_NAME}.tgz"
+        asset_path: ./${DOWNLOADED}
         asset_name: "${REPO_NAME}-${NEW_VERSION}.tgz"
         asset_content_type: application/gzip
 
