@@ -49,8 +49,7 @@ jobs:
       with:
          tag_name: ${{ steps.tag.outputs.tag }}
          release_name: ${{ steps.tag.outputs.tag }}
-          body: |
-            ${{ steps.create-release-notes.outputs.release_body }}
+          body: ${{ steps.create-release-notes.outputs.release_body }}
           draft: false
           prerelease: false
     - name: Upload Release Asset
