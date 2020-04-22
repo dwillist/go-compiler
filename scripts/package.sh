@@ -81,9 +81,9 @@ function main() {
         # use old packager
         util::tools::packager::install --directory "${BUILDPACKDIR}/.bin"
 
-        if [[ "${PACKAGE_DIR}" == "*.tgz" ]]; then
-            PACKAGE_DIR="${PACKAGE_DIR%.tgz}"
-        fi
+        PACKAGE_DIR="${PACKAGE_DIR%.tgz}"
+
+        echo "PACKAGE_DIR -> ${PACKAGE_DIR}"
 
         args="${BUILDPACKDIR}/.bin/packager"
         if [[ -n "${cached:-}" ]]; then
@@ -116,5 +116,3 @@ function main() {
 }
 
 main "${@:-}"
-
-find . -name '*.tgz'
