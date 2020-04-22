@@ -42,11 +42,13 @@ jobs:
     - name: Create Release Notes
       id: create-release-notes
       run: |
+        mkdir -p "${HOME}/bin"
+        export PATH="${HOME}/bin"
         curl "https://github.com/cloudfoundry/packit/releases/download/v0.0.4/jam-linux" \
           --silent \
           --location \
-          --output /usr/local/bin/jam
-        chmod +x /usr/local/bin/jam
+          --output "${HOME}/bin/jam"
+        chmod +x "${HOME}/bin/jam"
         RELEASE_BODY=$(jam summarize --buildpack "${PWD}/artifact.tgz" --format markdown)
         # Coz of this messed up issue
         # https://github.community/t5/GitHub-Actions/set-output-Truncates-Multiline-Strings/m-p/38372#M3322
