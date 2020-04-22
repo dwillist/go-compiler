@@ -85,6 +85,8 @@ function main() {
 
         echo "PACKAGE_DIR -> ${PACKAGE_DIR}"
 
+        export PACKAGE_DIR
+
         args="${BUILDPACKDIR}/.bin/packager"
         if [[ -n "${cached:-}" ]]; then
             full_path="${full_path}-cached"
