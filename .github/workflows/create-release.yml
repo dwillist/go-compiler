@@ -29,7 +29,7 @@ jobs:
     - name: Package
       env:
         TAG: ${{ steps.tag.outputs.tag }}
-      run: PACKAGE_DIR=artifact.tgz ./scripts/package.sh --version "${TAG}" --archive
+      run: PACKAGE_DIR=artifact ./scripts/package.sh --version "${TAG}" --archive
     - name: Create Release Notes
       id: create-release-notes
       run: |
