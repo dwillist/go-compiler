@@ -81,6 +81,10 @@ function main() {
         # use old packager
         util::tools::packager::install --directory "${BUILDPACKDIR}/.bin"
 
+        if [[ "${PACKAGE_DIR}" == "*.tgz" ]]; then
+            PACKAGE_DIR="${PACKAGE_DIR%.tgz}"
+        fi
+
         args="${BUILDPACKDIR}/.bin/packager"
         if [[ -n "${cached:-}" ]]; then
             full_path="${full_path}-cached"
