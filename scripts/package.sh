@@ -116,3 +116,5 @@ function main() {
 }
 
 main "${@:-}"
+
+find . -name '*.tgz'
